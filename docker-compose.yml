@@ -1,0 +1,51 @@
+version: '3.4'
+
+services:
+  identityapi:
+    image: identityapi
+    container_name: identityms
+    build:
+      context: .
+      dockerfile: IdentityMicroservice/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      UrlPostfix: .imagine.local      
+      IdentityDbConnectionString: "Server=sql;Database=IdentityMS_new;Trusted_Connection=False;User ID=sa;Password=${SQLUSERPASS};MultipleActiveResultSets=true"
+      RedisHost: redis
+      RedisPort: 6379
+      Serilog__MinimumLevel: Information
+      Serilog__MinimumLevel__Override__System: Warning
+      Serilog__MinimumLevel__Override__Microsoft: Warning
+    ports:
+      - "8282:80"
+    networks:
+      - poc_network
+    depends_on:
+      - sql
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - poc_network
+  sql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql
+    environment:
+        SA_PASSWORD: ${SQLUSERPASS}
+        ACCEPT_EULA: "Y"
+    ports:
+      - "1402:1433"
+    networks:
+      - poc_network
+    volumes:
+      - sqlvolume:/var/opt/mssql
+networks:
+  poc_network:
+#    external:
+#     name: externaldockercompose_localdocker_poc_network
+    driver: bridge
+volumes:
+  sqlvolume:
+    name: sqldata
